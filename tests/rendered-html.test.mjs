@@ -1,17 +1,31 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { encodeStandardCustomerBarcode, splitBarcodeFields } from "../app/lib/auspost.js";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { createServer } from "vite";
+import {
+  encodeCustomerBarcode,
+  encodeStandardCustomerBarcode,
+  explainCustomerInformation,
+  explainReedSolomon,
+  explainStandardReedSolomon,
+  splitBarcodeFields,
+} from "../app/lib/auspost.js";
 
 async function render() {
-  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
-  const { default: worker } = await import(workerUrl.href);
+  const server = await createServer({
+    appType: "custom",
+    logLevel: "silent",
+    server: { middlewareMode: true },
+  });
 
-  return worker.fetch(
-    new Request("http://localhost/", { headers: { accept: "text/html" } }),
-    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
-    { waitUntil() {}, passThroughOnException() {} },
-  );
+  try {
+    const { default: Page } = await server.ssrLoadModule("/app/page.tsx");
+    return renderToStaticMarkup(createElement(Page));
+  } finally {
+    await server.close();
+  }
 }
 
 test("encodes the verified Australia Post FCC 11 sample", () => {
@@ -21,6 +35,11 @@ test("encodes the verified Australia Post FCC 11 sample", () => {
 
   const fields = splitBarcodeFields(encoded);
   assert.deepEqual(fields.map((field) => field.value.length), [2, 4, 16, 1, 12, 2]);
+
+  const reedSolomon = explainStandardReedSolomon(encoded);
+  assert.deepEqual(reedSolomon.dataSymbols.map((symbol) => symbol.decimal), [4, 20, 49, 37, 49, 38, 23]);
+  assert.equal(reedSolomon.checkStates, "312101311322");
+  assert.deepEqual(reedSolomon.checkSymbols.map((symbol) => symbol.decimal), [54, 17, 53, 58]);
 });
 
 test("rejects incomplete or non-numeric DPIDs", () => {
@@ -28,15 +47,102 @@ test("rejects incomplete or non-numeric DPIDs", () => {
   assert.throws(() => encodeStandardCustomerBarcode("1234567A"));
 });
 
-test("server-renders the finished generator", async () => {
-  const response = await render();
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
+test("encodes verified 52-bar FCC 59 samples", () => {
+  const numeric = encodeCustomerBarcode({
+    barCount: 52,
+    dpid: "12345678",
+    customerInfo: "8765",
+    customerEncoding: "N",
+  });
+  assert.equal(numeric, "1312300102101112202122222120123333333332022323313213");
 
-  const html = await response.text();
+  const character = encodeCustomerBarcode({
+    barCount: 52,
+    dpid: "56439111",
+    customerInfo: "ABA 9",
+    customerEncoding: "C",
+  });
+  assert.equal(character, "1312301220111030010101000001000003322331012100033113");
+  assert.deepEqual(splitBarcodeFields(character).map((field) => field.value.length), [2, 4, 16, 16, 12, 2]);
+  assert.equal(explainReedSolomon(character).checkStates, "310121000331");
+});
+
+test("encodes verified 67-bar FCC 62 samples", () => {
+  const character = encodeCustomerBarcode({
+    barCount: 67,
+    dpid: "12345678",
+    customerInfo: "STATE SZ#6",
+    customerEncoding: "C",
+  });
+  assert.equal(character, "1320020102101112202122200201000201011003200221013312320112303223313");
+
+  const numeric = encodeCustomerBarcode({
+    barCount: 67,
+    dpid: "10913627",
+    customerInfo: "123456789009876",
+    customerEncoding: "N",
+  });
+  assert.equal(numeric, "1320020100300110200221010210111220212230000030222120302010000300113");
+
+  const custom = encodeCustomerBarcode({
+    barCount: 67,
+    dpid: "19563573",
+    customerInfo: "01300112020131020301",
+    customerEncoding: "custom",
+  });
+  assert.equal(custom, "1320020130122010122110013001120201310203013333333333320330202000313");
+  assert.deepEqual(splitBarcodeFields(custom).map((field) => field.value.length), [2, 4, 16, 31, 12, 2]);
+  assert.equal(explainReedSolomon(custom).checkStates, "203302020003");
+});
+
+test("pads customer information and validates each encoding", () => {
+  assert.deepEqual(
+    explainCustomerInformation({ barCount: 52, value: "8765", encoding: "N" }),
+    {
+      encoding: "N",
+      capacity: 16,
+      limit: 8,
+      encodedStates: "22212012",
+      fillerCount: 8,
+      states: "2221201233333333",
+    },
+  );
+
+  assert.throws(() => encodeCustomerBarcode({ barCount: 52, dpid: "12345678", customerInfo: "123456789", customerEncoding: "N" }));
+  assert.throws(() => encodeCustomerBarcode({ barCount: 52, dpid: "12345678", customerInfo: "BAD@", customerEncoding: "C" }));
+  assert.throws(() => encodeCustomerBarcode({ barCount: 67, dpid: "12345678", customerInfo: "01234", customerEncoding: "custom" }));
+});
+
+test("builds a portable static entry page", async () => {
+  const html = await readFile(new URL("../dist/index.html", import.meta.url), "utf8");
   assert.match(html, /<title>Australia Post 4-State 条码生成器<\/title>/i);
+  assert.match(html, /<html lang="zh-CN">/i);
+  assert.match(
+    html,
+    /<meta\s+name="description"\s+content="生成 Australia Post 37、52 与 67-bar 4-State Customer Barcode，并保存为 PNG。"\s*\/>/i,
+  );
+  assert.match(html, /<div id="root"><\/div>/i);
+  assert.match(html, /<script[^>]+type="module"[^>]+src="\.\/assets\/[^\"]+\.js"/i);
+  assert.doesNotMatch(html, /vinext|cloudflare|wrangler|codex-preview/i);
+});
+
+test("renders the finished generator", async () => {
+  const html = await render();
   assert.match(html, /Delivery Point Identifier/);
+  assert.match(html, /选择 37、52 或 67-bar 格式/);
+  assert.match(html, /FCC[\s\S]*59/);
+  assert.match(html, /FCC[\s\S]*62/);
   assert.match(html, /保存为 PNG/);
   assert.match(html, /Reed-Solomon/);
+  assert.match(html, /RS\(11,7\)/);
+  assert.match(html, /从固定的 13 开始/);
+  assert.match(html, /FCC 说明条码格式/);
+  assert.match(html, /8 位 DPID 变成 16 根 bar/);
+  assert.match(html, /用 Filler 补齐数据区/);
+  assert.match(html, /计算 12 根纠错 bar/);
+  assert.match(html, /最后用 13 结束/);
+  assert.doesNotMatch(html, /NUMERIC ENCODING/);
+  assert.doesNotMatch(html, /不是 Filter/);
+  assert.doesNotMatch(html, /基于工作区内 4 份资料/);
   assert.doesNotMatch(html, /codex-preview|SkeletonPreview|react-loading-skeleton/);
 });
