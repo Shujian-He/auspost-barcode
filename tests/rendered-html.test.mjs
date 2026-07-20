@@ -13,7 +13,7 @@ import {
   splitBarcodeFields,
 } from "../app/lib/auspost.js";
 
-async function render() {
+async function render(props = {}) {
   const server = await createServer({
     appType: "custom",
     logLevel: "silent",
@@ -22,7 +22,7 @@ async function render() {
 
   try {
     const { default: Page } = await server.ssrLoadModule("/app/page.tsx");
-    return renderToStaticMarkup(createElement(Page));
+    return renderToStaticMarkup(createElement(Page, props));
   } finally {
     await server.close();
   }
@@ -141,8 +141,26 @@ test("renders the finished generator", async () => {
   assert.match(html, /用 Filler 补齐数据区/);
   assert.match(html, /计算 12 根纠错 bar/);
   assert.match(html, /最后用 13 结束/);
+  assert.equal((html.match(/class="brand-mark"/g) ?? []).length, 2);
+  assert.doesNotMatch(html, /POST \/ FOUR|4-STATE CODE STUDIO|footer-mark|>P\/F</);
   assert.doesNotMatch(html, /NUMERIC ENCODING/);
   assert.doesNotMatch(html, /不是 Filter/);
   assert.doesNotMatch(html, /基于工作区内 4 份资料/);
   assert.doesNotMatch(html, /codex-preview|SkeletonPreview|react-loading-skeleton/);
+});
+
+test("renders the complete English translation", async () => {
+  const html = await render({ initialLanguage: "en" });
+  assert.match(html, /Turn delivery data/);
+  assert.match(html, /Choose a 37, 52, or 67-bar format/);
+  assert.match(html, /How it works/);
+  assert.match(html, /Save as PNG/);
+  assert.match(html, /Start with the fixed 13/);
+  assert.match(html, /The FCC identifies the format/);
+  assert.match(html, /Convert the 8-digit DPID into 16 bars/);
+  assert.match(html, /Calculate 12 error-correction bars/);
+  assert.match(html, /Finish with 13/);
+  assert.match(html, /Preserve these physical requirements when printing/);
+  assert.match(html, /class="is-active" aria-pressed="true" lang="en">EN/);
+  assert.doesNotMatch(html, /把投递信息|生成原理|保存为 PNG|打印前/);
 });
