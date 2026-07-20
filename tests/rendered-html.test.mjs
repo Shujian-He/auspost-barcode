@@ -116,7 +116,7 @@ test("pads customer information and validates each encoding", () => {
 test("builds a GitHub Pages entry page", async () => {
   const html = await readFile(new URL("../dist/index.html", import.meta.url), "utf8");
   assert.match(html, /<title>Australia Post 4-State Barcode Generator<\/title>/i);
-  assert.match(html, /<html lang="en">/i);
+  assert.match(html, /<html lang="en-AU">/i);
   assert.match(
     html,
     /<meta\s+name="description"\s+content="Generate 37, 52, and 67-bar Australia Post 4-State Customer Barcodes and save them as PNG files."\s*\/>/i,
@@ -142,8 +142,9 @@ test("renders the finished generator", async () => {
   assert.match(html, /Fill the data area with a Filler/);
   assert.match(html, /Calculate 12 error-correction bars/);
   assert.match(html, /Finish with 13/);
-  assert.match(html, /class="is-active" aria-pressed="true" lang="en">EN/);
-  assert.ok(html.indexOf('lang="en"') < html.indexOf('lang="zh-CN"'));
+  assert.match(html, /class="is-active" aria-pressed="true" lang="en-AU">EN/);
+  assert.ok(html.indexOf('lang="en-AU"') < html.indexOf('lang="zh-CN"'));
+  assert.ok(html.indexOf('lang="zh-CN"') < html.indexOf('lang="ja"'));
   assert.doesNotMatch(html, /How it works|生成原理|class="header-link"/);
   assert.equal((html.match(/class="brand-mark"/g) ?? []).length, 2);
   assert.doesNotMatch(html, /POST \/ FOUR|4-STATE CODE STUDIO|footer-mark|>P\/F</);
@@ -165,5 +166,21 @@ test("renders the complete Chinese translation", async () => {
   assert.match(html, /最后用 13 结束/);
   assert.match(html, /打印前，请保留这些物理条件/);
   assert.match(html, /class="is-active" aria-pressed="true" lang="zh-CN">中文/);
-  assert.doesNotMatch(html, /Turn delivery data|How it works|Save as PNG|Preserve these physical requirements/);
+  assert.doesNotMatch(html, /Turn delivery data|配送データから|Save as PNG|PNGで保存|Preserve these physical requirements/);
+});
+
+test("renders the complete Japanese translation", async () => {
+  const html = await render({ initialLanguage: "ja" });
+  assert.match(html, /配送データから/);
+  assert.match(html, /37、52、67バーの形式を選択/);
+  assert.match(html, /PNGで保存/);
+  assert.match(html, /固定値13から開始/);
+  assert.match(html, /FCCがバーコード形式を識別/);
+  assert.match(html, /8桁のDPIDを16本のバーに変換/);
+  assert.match(html, /12本の誤り訂正バーを計算/);
+  assert.match(html, /最後も13で終了/);
+  assert.match(html, /印刷時は、次の物理要件を維持してください/);
+  assert.match(html, /class="is-active" aria-pressed="true" lang="ja">日本語/);
+  assert.match(html, /data-short-label="例"/);
+  assert.doesNotMatch(html, /Turn delivery data|把投递信息|Save as PNG|保存为 PNG|Preserve these physical requirements/);
 });

@@ -13,7 +13,13 @@ import {
 type BarCount = 37 | 52 | 67;
 type CustomerEncoding = "N" | "C" | "custom";
 type ReedSolomonSymbol = { states: string; decimal: number };
-type Language = "zh" | "en";
+type Language = "zh" | "en" | "ja";
+
+const LANGUAGE_TAGS: Record<Language, string> = {
+  en: "en-AU",
+  zh: "zh-CN",
+  ja: "ja",
+};
 
 const SAMPLES: Record<BarCount, { dpid: string; customerInfo: string; encoding: CustomerEncoding }> = {
   37: { dpid: "20040908", customerInfo: "", encoding: "N" },
@@ -54,6 +60,7 @@ const COPY = {
     languageSwitcher: "切换页面语言",
     chinese: "中文",
     english: "EN",
+    japanese: "日本語",
     heroLineOne: "把投递信息",
     heroLineTwo: "变成",
     barcode: "条码",
@@ -62,6 +69,7 @@ const COPY = {
     formatAria: "选择条码长度",
     encodingDetails: { N: "数字", C: "字符", custom: "Bar states" },
     useSample: "使用示例",
+    sampleShort: "例",
     dpidMissing: (count: number) => `还需要 ${count} 位数字`,
     dpidHelp: "DPID 是地址的 8 位投递点标识，并不是邮政编码。",
     encodingAria: "Customer Information 编码方式",
@@ -143,6 +151,7 @@ const COPY = {
     languageSwitcher: "Switch page language",
     chinese: "中文",
     english: "EN",
+    japanese: "日本語",
     heroLineOne: "Turn delivery data",
     heroLineTwo: "into a",
     barcode: "barcode",
@@ -151,6 +160,7 @@ const COPY = {
     formatAria: "Choose barcode length",
     encodingDetails: { N: "Numeric", C: "Character", custom: "Bar states" },
     useSample: "Use sample",
+    sampleShort: "Try",
     dpidMissing: (count: number) => `${count} more digit${count === 1 ? "" : "s"} required`,
     dpidHelp: "A DPID is an address's 8-digit delivery point identifier, not a postcode.",
     encodingAria: "Customer Information encoding",
@@ -225,11 +235,103 @@ const COPY = {
     notice: "This tool does not confirm whether a DPID actually exists. A valid DPID should be obtained from the Postal Address File using AMAS-certified address-matching software.",
     horizontalVertical: "mm horiz. / vert.",
   },
+  ja: {
+    pageTitle: "Australia Post 4ステートバーコードジェネレーター",
+    pageDescription: "Australia Postの37、52、67バー4ステートカスタマーバーコードを生成し、PNG形式で保存できます。",
+    backToTop: "ページ上部に戻る",
+    languageSwitcher: "表示言語を切り替える",
+    chinese: "中文",
+    english: "EN",
+    japanese: "日本語",
+    heroLineOne: "配送データから",
+    heroLineTwo: "",
+    barcode: "バーコードを生成",
+    intro: "37、52、67バーの形式を選択し、Australia PostのDPIDと任意の顧客情報を入力すると、Reed-Solomon誤り訂正付きバーコードをリアルタイムで生成します。",
+    formatCaption: "出力バー数を選択",
+    formatAria: "バーコードのバー数を選択",
+    encodingDetails: { N: "数字", C: "文字", custom: "バー状態" },
+    useSample: "サンプルを使用",
+    sampleShort: "例",
+    dpidMissing: (count: number) => `あと${count}桁必要です`,
+    dpidHelp: "DPIDは住所ごとの8桁の配達地点識別子で、郵便番号ではありません。",
+    encodingAria: "顧客情報のエンコード方式",
+    numericPlaceholder: "任意の数字",
+    characterPlaceholder: "任意の文字",
+    statesPlaceholder: "任意の0〜3の状態値",
+    statesUnit: "状態",
+    charactersUnit: "文字",
+    encodedSummary: (encoded: number, filler: number) => `${encoded}本をエンコード · Filler ${filler}本`,
+    previewWait: "8桁のDPIDを待機中",
+    barcodeCanvas: (dpid: string, bars: number) => `DPID ${dpid}の${bars}バー4ステートバーコード`,
+    previewArea: "バーコードプレビュー",
+    previewPlaceholder: "完全なDPIDを入力すると生成されます",
+    savePng: "PNGで保存",
+    copied: "コピーしました",
+    copyStates: "バー状態をコピー",
+    pngNote: "PNGには黒いバーコードと規格準拠の白いクワイエットゾーンのみが含まれ、レイアウトにそのまま使用できます。",
+    fourStatesAria: "4種類のバー状態",
+    fourStatesIntro: "すべてのバーは中央のトラッカーを共有し、状態に応じて上方向または下方向へ伸びます。",
+    stateDetails: ["フルハイト", "アセンダー", "ディセンダー", "トラッカー"],
+    guideTitle: (bars: number) => `${bars}バーコードはどのように構成される？`,
+    guideFormat37: "DPIDのみを格納し、Customer Informationは含みません。",
+    guideFormatExtended: (bars: number) => `DPIDの後に${bars}本のCustomer Informationバーを配置します。`,
+    fieldMapAria: (bars: number) => `${bars}バーコードのフィールド構成`,
+    fieldEmpty: "完全なDPIDを入力すると、各フィールドに対応するバー状態が表示されます。",
+    sequenceAria: (bars: number) => `${bars}バーコードの構成順序`,
+    startTitle: "固定値13から開始",
+    startCopy: "1本目はAscender（state 1）、2本目はTracker（state 3）です。この固定ペアがバーコードの開始位置を示し、装置による上下逆の検出にも役立ちます。",
+    startAria: "Startバーはbar state 1と3",
+    fccTitle: "FCCがバーコード形式を識別",
+    fccCopy: "FCCは2桁の数字です。各桁が2本のバーに変換されるため、常に4本を使用します。仕分け装置はFCCから用途、全長、後続するCustomer Informationの有無を判断します。",
+    fccTableAria: "FCCの組み合わせ",
+    current: "選択中",
+    fccNote: "資料では上記5種類のFCCが定義されています。このページではFCC 11、59、62を生成します。無効なFCCを含む郵便物は受け付けられない場合があります。",
+    dpidTitle: "8桁のDPIDを16本のバーに変換",
+    dpidCopy: "DPIDの各10進数字は対応表によって2桁のバー状態に変換されます。例：",
+    dpidSymbolsAria: "現在のDPID各桁のエンコード",
+    dpidSymbolsEmpty: "完全なDPIDを入力すると各桁のエンコードが表示されます",
+    fillerTitle: "Fillerでデータ領域を埋める",
+    customerTitle: "Customer Informationをエンコード",
+    fillerAria: "Fillerにはbar state 3のTrackerを使用",
+    fillerCopy: "Standard Customer BarcodeではTracker（state 3）を1本追加し、FCC + DPID + Fillerを合計21本のデータバーにします。これを次の処理で3本ずつ7組のシンボルに分割します。",
+    filler37: "Fillerバーを必ず1本使用します。",
+    fillerExtended: "FillerはCustomer Informationフィールド内に配置されます。",
+    customerSummaryAria: "Customer Informationのエンコード概要",
+    customerEncodingCopy: {
+      N: "Nテーブルでは各数字を2本のバーにエンコードします。",
+      C: "Cテーブルでは対応する各文字を3本のバーにエンコードします。",
+      custom: "Customモードでは入力した0〜3をそのままバー状態として使用します。",
+    },
+    customerFillerCopy: (bars: number) => `${bars}本に満たない部分は、右側をTracker（state 3）で埋めます。`,
+    customerNote: (encoded: number, filler: number) => `現在の入力は${encoded}本を使用し、Fillerを${filler}本追加します。FillerはCustomer Informationフィールドの一部であり、独立したフィールドではありません。`,
+    rsTitle: "12本の誤り訂正バーを計算",
+    rsCopy: (standard: boolean) => `Reed-Solomonは前段のFCC、DPID、${standard ? "Filler" : "Fillerを含むCustomer Information全体"}からチェックデータを計算します。StartバーとStopバーは計算対象外です。`,
+    rsSummaryAria: "Reed-Solomon計算の概要",
+    rsGroupTitle: "バーを3本ずつまとめてGF(64)シンボルに変換",
+    rsGroupCopy: "3桁の各グループを4進数として解釈し、0〜63の数値に変換します。",
+    waitingDpid: "完全なDPIDを待機中",
+    rsRemainderTitle: "有限体で4つの剰余を計算",
+    rsRemainderCopyBefore: "原始多項式",
+    rsRemainderCopyAfter: "（0x43）と生成多項式係数",
+    rsRemainderCopyEnd: "を使用し、各ラウンドの有限体加減算をXORで行います。",
+    rsOutputTitle: "4つの剰余を12本のバーに戻す",
+    rsOutputCopy: "各チェックシンボルを3桁の4進数として書き出し、Stopバーの直前に順番どおり配置します。",
+    rsNote: "これらのチェックバーにより、軽い汚れ、印刷抜け、反射の影響があっても装置がバーコードを検証できます。ただし、DPIDが実在するかどうかは確認しません。",
+    stopTitle: "最後も13で終了",
+    stopCopy: "StopバーはStartバーと同じAscender（1）+ Tracker（3）です。固定された対称の両端により、スキャン装置は方向と境界を確実に識別できます。",
+    stopAria: "Stopバーはbar state 1と3",
+    printTitle: "印刷時は、次の物理要件を維持してください。",
+    printCopy: "このページは正しくエンコードされた高解像度画像を生成します。最終的な郵便物は、寸法、コントラスト、配置、用紙に関するAustralia Postの要件も満たす必要があります。",
+    important: "重要",
+    notice: "このツールはDPIDが実在するかどうかを確認しません。有効なDPIDは、AMAS認証済みの住所照合ソフトウェアを使用してPostal Address Fileから取得してください。",
+    horizontalVertical: "mm 横 / 縦",
+  },
 } as const;
 
 function getInitialLanguage(): Language {
   if (typeof window === "undefined") return "en";
-  return window.localStorage.getItem("post-four-language") === "zh" ? "zh" : "en";
+  const savedLanguage = window.localStorage.getItem("post-four-language");
+  return savedLanguage === "zh" || savedLanguage === "ja" ? savedLanguage : "en";
 }
 
 function drawBarcode(canvas: HTMLCanvasElement, states: string) {
@@ -341,7 +443,7 @@ export default function Home({ initialLanguage = getInitialLanguage() }: { initi
   const customerEnd = 22 + format.customerBars;
 
   useEffect(() => {
-    document.documentElement.lang = language === "zh" ? "zh-CN" : "en";
+    document.documentElement.lang = LANGUAGE_TAGS[language];
     document.title = copy.pageTitle;
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute("content", copy.pageDescription);
     window.localStorage.setItem("post-four-language", language);
@@ -423,7 +525,7 @@ export default function Home({ initialLanguage = getInitialLanguage() }: { initi
               type="button"
               className={language === "en" ? "is-active" : ""}
               aria-pressed={language === "en"}
-              lang="en"
+              lang="en-AU"
               onClick={() => setLanguage("en")}
             >
               {copy.english}
@@ -436,6 +538,15 @@ export default function Home({ initialLanguage = getInitialLanguage() }: { initi
               onClick={() => setLanguage("zh")}
             >
               {copy.chinese}
+            </button>
+            <button
+              type="button"
+              className={language === "ja" ? "is-active" : ""}
+              aria-pressed={language === "ja"}
+              lang="ja"
+              onClick={() => setLanguage("ja")}
+            >
+              {copy.japanese}
             </button>
           </div>
         </div>
@@ -501,7 +612,7 @@ export default function Home({ initialLanguage = getInitialLanguage() }: { initi
                 <button
                   type="button"
                   className="sample-button"
-                  data-short-label={language === "zh" ? "例" : "Try"}
+                  data-short-label={copy.sampleShort}
                   onClick={useSample}
                 >
                   {copy.useSample}
