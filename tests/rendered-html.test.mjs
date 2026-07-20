@@ -113,7 +113,7 @@ test("pads customer information and validates each encoding", () => {
   assert.throws(() => encodeCustomerBarcode({ barCount: 67, dpid: "12345678", customerInfo: "01234", customerEncoding: "custom" }));
 });
 
-test("builds a portable static entry page", async () => {
+test("builds a GitHub Pages entry page", async () => {
   const html = await readFile(new URL("../dist/index.html", import.meta.url), "utf8");
   assert.match(html, /<title>Australia Post 4-State 条码生成器<\/title>/i);
   assert.match(html, /<html lang="zh-CN">/i);
@@ -122,7 +122,8 @@ test("builds a portable static entry page", async () => {
     /<meta\s+name="description"\s+content="生成 Australia Post 37、52 与 67-bar 4-State Customer Barcode，并保存为 PNG。"\s*\/>/i,
   );
   assert.match(html, /<div id="root"><\/div>/i);
-  assert.match(html, /<script[^>]+type="module"[^>]+src="\.\/assets\/[^\"]+\.js"/i);
+  assert.match(html, /<script[^>]+type="module"[^>]+src="\/auspost-barcode\/assets\/[^\"]+\.js"/i);
+  assert.match(html, /<link[^>]+href="\/auspost-barcode\/assets\/[^\"]+\.css"/i);
   assert.doesNotMatch(html, /vinext|cloudflare|wrangler|codex-preview/i);
 });
 
