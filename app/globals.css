@@ -203,24 +203,6 @@ input:focus-visible {
 
 .brand:hover { color: var(--red); }
 
-.header-link {
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 650;
-  text-decoration: none;
-}
-
-.header-link span {
-  display: inline-block;
-  margin-left: 8px;
-  color: var(--red);
-  transition: transform 180ms ease;
-}
-
-.header-link:hover span {
-  transform: translate(3px, 3px);
-}
-
 .header-actions {
   display: flex;
   align-items: center;
@@ -1233,7 +1215,6 @@ footer p { margin: 0; color: rgba(255,255,255,0.6); font-size: 11px; }
   .guide,
   .spec-section { width: min(100% - 32px, 1440px); }
   .site-header { min-height: 76px; }
-  .header-link { display: none; }
   .hero { padding: 46px 0 70px; gap: 48px; }
   h1 { font-size: clamp(43px, 13vw, 66px); }
   .number-input { gap: 10px; padding-left: 13px; }

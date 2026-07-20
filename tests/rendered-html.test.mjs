@@ -115,11 +115,11 @@ test("pads customer information and validates each encoding", () => {
 
 test("builds a GitHub Pages entry page", async () => {
   const html = await readFile(new URL("../dist/index.html", import.meta.url), "utf8");
-  assert.match(html, /<title>Australia Post 4-State 条码生成器<\/title>/i);
-  assert.match(html, /<html lang="zh-CN">/i);
+  assert.match(html, /<title>Australia Post 4-State Barcode Generator<\/title>/i);
+  assert.match(html, /<html lang="en">/i);
   assert.match(
     html,
-    /<meta\s+name="description"\s+content="生成 Australia Post 37、52 与 67-bar 4-State Customer Barcode，并保存为 PNG。"\s*\/>/i,
+    /<meta\s+name="description"\s+content="Generate 37, 52, and 67-bar Australia Post 4-State Customer Barcodes and save them as PNG files."\s*\/>/i,
   );
   assert.match(html, /<div id="root"><\/div>/i);
   assert.match(html, /<script[^>]+type="module"[^>]+src="\/auspost-barcode\/assets\/[^\"]+\.js"/i);
@@ -130,18 +130,21 @@ test("builds a GitHub Pages entry page", async () => {
 test("renders the finished generator", async () => {
   const html = await render();
   assert.match(html, /Delivery Point Identifier/);
-  assert.match(html, /选择 37、52 或 67-bar 格式/);
+  assert.match(html, /Choose a 37, 52, or 67-bar format/);
   assert.match(html, /FCC[\s\S]*59/);
   assert.match(html, /FCC[\s\S]*62/);
-  assert.match(html, /保存为 PNG/);
+  assert.match(html, /Save as PNG/);
   assert.match(html, /Reed-Solomon/);
   assert.match(html, /RS\(11,7\)/);
-  assert.match(html, /从固定的 13 开始/);
-  assert.match(html, /FCC 说明条码格式/);
-  assert.match(html, /8 位 DPID 变成 16 根 bar/);
-  assert.match(html, /用 Filler 补齐数据区/);
-  assert.match(html, /计算 12 根纠错 bar/);
-  assert.match(html, /最后用 13 结束/);
+  assert.match(html, /Start with the fixed 13/);
+  assert.match(html, /The FCC identifies the format/);
+  assert.match(html, /Convert the 8-digit DPID into 16 bars/);
+  assert.match(html, /Fill the data area with a Filler/);
+  assert.match(html, /Calculate 12 error-correction bars/);
+  assert.match(html, /Finish with 13/);
+  assert.match(html, /class="is-active" aria-pressed="true" lang="en">EN/);
+  assert.ok(html.indexOf('lang="en"') < html.indexOf('lang="zh-CN"'));
+  assert.doesNotMatch(html, /How it works|生成原理|class="header-link"/);
   assert.equal((html.match(/class="brand-mark"/g) ?? []).length, 2);
   assert.doesNotMatch(html, /POST \/ FOUR|4-STATE CODE STUDIO|footer-mark|>P\/F</);
   assert.doesNotMatch(html, /NUMERIC ENCODING/);
@@ -150,18 +153,17 @@ test("renders the finished generator", async () => {
   assert.doesNotMatch(html, /codex-preview|SkeletonPreview|react-loading-skeleton/);
 });
 
-test("renders the complete English translation", async () => {
-  const html = await render({ initialLanguage: "en" });
-  assert.match(html, /Turn delivery data/);
-  assert.match(html, /Choose a 37, 52, or 67-bar format/);
-  assert.match(html, /How it works/);
-  assert.match(html, /Save as PNG/);
-  assert.match(html, /Start with the fixed 13/);
-  assert.match(html, /The FCC identifies the format/);
-  assert.match(html, /Convert the 8-digit DPID into 16 bars/);
-  assert.match(html, /Calculate 12 error-correction bars/);
-  assert.match(html, /Finish with 13/);
-  assert.match(html, /Preserve these physical requirements when printing/);
-  assert.match(html, /class="is-active" aria-pressed="true" lang="en">EN/);
-  assert.doesNotMatch(html, /把投递信息|生成原理|保存为 PNG|打印前/);
+test("renders the complete Chinese translation", async () => {
+  const html = await render({ initialLanguage: "zh" });
+  assert.match(html, /把投递信息/);
+  assert.match(html, /选择 37、52 或 67-bar 格式/);
+  assert.match(html, /保存为 PNG/);
+  assert.match(html, /从固定的 13 开始/);
+  assert.match(html, /FCC 说明条码格式/);
+  assert.match(html, /8 位 DPID 变成 16 根 bar/);
+  assert.match(html, /计算 12 根纠错 bar/);
+  assert.match(html, /最后用 13 结束/);
+  assert.match(html, /打印前，请保留这些物理条件/);
+  assert.match(html, /class="is-active" aria-pressed="true" lang="zh-CN">中文/);
+  assert.doesNotMatch(html, /Turn delivery data|How it works|Save as PNG|Preserve these physical requirements/);
 });

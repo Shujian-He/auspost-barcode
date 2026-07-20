@@ -51,7 +51,6 @@ const COPY = {
     pageTitle: "Australia Post 4-State 条码生成器",
     pageDescription: "生成 Australia Post 37、52 与 67-bar 4-State Customer Barcode，并保存为 PNG。",
     backToTop: "返回页面顶部",
-    guideLink: "生成原理",
     languageSwitcher: "切换页面语言",
     chinese: "中文",
     english: "EN",
@@ -141,7 +140,6 @@ const COPY = {
     pageTitle: "Australia Post 4-State Barcode Generator",
     pageDescription: "Generate 37, 52, and 67-bar Australia Post 4-State Customer Barcodes and save them as PNG files.",
     backToTop: "Back to top",
-    guideLink: "How it works",
     languageSwitcher: "Switch page language",
     chinese: "中文",
     english: "EN",
@@ -230,8 +228,8 @@ const COPY = {
 } as const;
 
 function getInitialLanguage(): Language {
-  if (typeof window === "undefined") return "zh";
-  return window.localStorage.getItem("post-four-language") === "en" ? "en" : "zh";
+  if (typeof window === "undefined") return "en";
+  return window.localStorage.getItem("post-four-language") === "zh" ? "zh" : "en";
 }
 
 function drawBarcode(canvas: HTMLCanvasElement, states: string) {
@@ -420,19 +418,7 @@ export default function Home({ initialLanguage = getInitialLanguage() }: { initi
           <BrandMark />
         </a>
         <div className="header-actions">
-          <a className="header-link" href="#guide">
-            {copy.guideLink} <span aria-hidden="true">↘</span>
-          </a>
           <div className="language-switcher" role="group" aria-label={copy.languageSwitcher}>
-            <button
-              type="button"
-              className={language === "zh" ? "is-active" : ""}
-              aria-pressed={language === "zh"}
-              lang="zh-CN"
-              onClick={() => setLanguage("zh")}
-            >
-              {copy.chinese}
-            </button>
             <button
               type="button"
               className={language === "en" ? "is-active" : ""}
@@ -441,6 +427,15 @@ export default function Home({ initialLanguage = getInitialLanguage() }: { initi
               onClick={() => setLanguage("en")}
             >
               {copy.english}
+            </button>
+            <button
+              type="button"
+              className={language === "zh" ? "is-active" : ""}
+              aria-pressed={language === "zh"}
+              lang="zh-CN"
+              onClick={() => setLanguage("zh")}
+            >
+              {copy.chinese}
             </button>
           </div>
         </div>
