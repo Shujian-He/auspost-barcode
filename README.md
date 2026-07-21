@@ -14,8 +14,7 @@ Everything runs locally in the browser. The application does not require a serve
 - Draws the H, A, D, and T bar states on a high-resolution canvas
 - Exports PNG files with 6 mm horizontal and 2 mm vertical quiet zones
 - Explains the encoded fields, Reed-Solomon process, and print dimensions
-- Provides Australian English, Simplified Chinese, and Japanese interfaces
-- Uses Australian English by default and remembers the selected language locally
+- Provides English, Simplified Chinese, and Japanese interfaces
 
 ## Requirements
 
